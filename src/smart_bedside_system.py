@@ -22,12 +22,19 @@ class SmartBedsideSystem:
         GPIO.setmode(GPIO.BOARD)  # Refer to the GPIO pins by their physical number on the board.
         GPIO.setwarnings(False)  # Disable warnings.
 
-        self.spo2_hr_sensor = None  # Replace None by initializing the MAX30102 sensor (see User Story #1).
+        self.spo2_hr_sensor = DFRobot_BloodOxygen_S()
+        self.spo2_hr_sensor.begin()
+        self.spo2_hr_sensor.sensor_start_collect()
 
-        self.alarm_on = None  # Replace None by initializing the alarm status (see User Story #2).
+        GPIO.setup(self.BUZZER_PIN, GPIO.OUT, initial=GPIO.LOW)
+        self.alarm_on = False
 
-        self.o2_servo = None  # Replace None by initializing the servo motor's PWM instance (see User Story #4).
-        self.o2_valve_angle = None  # Replace None by initializing the valve angle, in degrees (see User Story #4).
+        GPIO.setup(self.BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+        GPIO.setup(self.O2_SERVO_PIN, GPIO.OUT)
+        self.o2_servo = GPIO.PWM(self.O2_SERVO_PIN, 50)
+        self.o2_servo.start(5.0)
+        self.o2_valve_angle = 0.0
 
     def read_vital_signs(self) -> int:
         """
@@ -35,20 +42,21 @@ class SmartBedsideSystem:
         Returns: int: SpO₂ percentage (70–100).
         Raises: SmartBedsideError: If the sensor returns an invalid reading (-1).
         """
-        # See User Story #1.
+        spo2 = self.spo2_hr_sensor.get_spo2()
+        if spo2 == -1:
+            raise SmartBedsideError("The SpO2 sensor returned an invalid reading.")
+        return spo2
 
     def manage_alarm(self) -> None:
         """
         Activate or deactivate the alarm based on the patient's blood oxygen saturation (SpO₂).
         Raises: SmartBedsideError: If the SpO₂ reading is invalid (propagated from read_vital_signs()).
         """
-        # See User Story #2.
 
     def stop_alarm(self) -> None:
         """
         Stop the alarm if the pushbutton is pressed. Otherwise, leave the alarm unchanged.
         """
-        # See User Story #3.
 
     def set_o2_valve_angle(self, angle: float) -> None:
         """
@@ -56,7 +64,6 @@ class SmartBedsideSystem:
         Args: angle (float): The target valve angle in degrees, between 0 and 180 degrees, inclusive.
         Raises: SmartBedsideError: If the target angle is outside the valid range of 0 to 180 degrees.
         """
-        # See User Story #4.
 
     def manage_oxygen_valve(self) -> None:
         """
@@ -66,4 +73,3 @@ class SmartBedsideSystem:
         Otherwise, fully close the oxygen delivery valve.
         Raises: SmartBedsideError: If the SpO₂ reading is invalid (propagated from read_vital_signs()).
         """
-        # See User Story #5.
