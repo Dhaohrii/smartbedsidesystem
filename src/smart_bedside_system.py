@@ -17,6 +17,7 @@ class SmartBedsideSystem:
     BUZZER_PIN = 22  # KY-012 active buzzer used as the alarm (see User Story #2).
     BUTTON_PIN = 16  # B3F-1020 pushbutton used to stop the alarm (see User Story #3).
     O2_SERVO_PIN = 12  # MG90S servo motor controlling the oxygen delivery valve (see User Story #4).
+    ALARM_LED_PIN = 18
 
     def __init__(self):
         GPIO.setmode(GPIO.BOARD)  # Refer to the GPIO pins by their physical number on the board.
@@ -35,6 +36,8 @@ class SmartBedsideSystem:
         self.o2_servo = GPIO.PWM(self.O2_SERVO_PIN, 50)
         self.o2_servo.start(5.0)
         self.o2_valve_angle = 0.0
+
+        GPIO.setup(self.ALARM_LED_PIN, GPIO.OUT)
 
     def read_vital_signs(self) -> list:
         """
@@ -59,6 +62,7 @@ class SmartBedsideSystem:
         if spo2==-1:
             raise  SmartBedsideError("The SpO2 sensor returned an invalid reading.")
         alarm_on = spo2[0] < 88 or spo2[1]<50 or spo2[1]>130
+        GPIO.output(self.ALARM_LED_PIN,alarm_on)
         GPIO.output(self.BUZZER_PIN, alarm_on)
         self.alarm_on = alarm_on
 
@@ -68,6 +72,7 @@ class SmartBedsideSystem:
         """
         if GPIO.input(self.BUTTON_PIN):
             GPIO.output(self.BUZZER_PIN, False)
+            GPIO.output(self.ALARM_LED_PIN,False)
             self.alarm_on = False
 
     def set_o2_valve_angle(self, angle: float) -> None:
