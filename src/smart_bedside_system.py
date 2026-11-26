@@ -56,7 +56,9 @@ class SmartBedsideSystem:
         Raises: SmartBedsideError: If the SpO₂ reading is invalid (propagated from read_vital_signs()).
         """
         spo2 = self.read_vital_signs()
-        alarm_on = spo2 < 88
+        if spo2==-1:
+            raise  SmartBedsideError("The SpO2 sensor returned an invalid reading.")
+        alarm_on = spo2[0] < 88 or spo2[1]<50 or spo2[1]>130
         GPIO.output(self.BUZZER_PIN, alarm_on)
         self.alarm_on = alarm_on
 
